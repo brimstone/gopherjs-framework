@@ -6,7 +6,6 @@ import (
 	"github.com/gopherjs/websocket"
 
 	"github.com/brimstone/gopherjs-framework/client"
-	"github.com/gopherjs/gopherjs/js"
 	"github.com/gopherjs/jquery"
 )
 
@@ -23,31 +22,45 @@ func main() {
 
 	log.Println("Hello world")
 
-	ws, err := websocket.New(client.WebsocketAddress() + "/ws")
+	c, err := websocket.Dial(client.WebsocketAddress() + "/ws")
 	if err != nil {
 		return
 	}
 
-	ws.AddEventListener("open", false, func(data *js.Object) {
-		log.Println("Websocket open")
-	})
-
-	ws.AddEventListener("message", false, func(ev *js.Object) {
-		msg := ev.Get("data").String()
-		if len(msg) > 0 {
-			jQuery(OUTPUT).SetText(msg)
-		} else {
-			jQuery(OUTPUT).Empty()
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := c.Read(buf)
+			if err != nil {
+				log.Println("Websocket connection errored", err.Error())
+				return
+			}
+			msg := string(buf[:n])
+			log.Println(msg)
+			if n > 0 {
+				jQuery(OUTPUT).SetText(msg)
+			} else {
+				jQuery(OUTPUT).Empty()
+			}
 		}
-	})
+	}()
+
+	toserver := make(chan string)
+
+	go func() {
+		for {
+			msg := <-toserver
+			_, err := c.Write([]byte(msg))
+			if err != nil {
+				log.Println("Websocket writing error", err.Error())
+			}
+		}
+	}()
 
 	jQuery(INPUT).On(jquery.KEYUP, func(e jquery.Event) {
 		name := jQuery(e.Target).Val()
 		name = jquery.Trim(name)
-		err := ws.Send(name)
-		if err != nil {
-			log.Println("Got error while writing to websocket:", err)
-		}
+		toserver <- name
 
 	})
 
