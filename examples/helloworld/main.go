@@ -12,7 +12,7 @@ import (
 
 func main() {
 	http.Handle("/ws", server.WebsocketHandler(func(in <-chan string, out chan<- string, done <-chan bool) {
-		fmt.Println("thing")
+		fmt.Println("Connection from client")
 		out <- "Hello from server"
 		for {
 			select {
@@ -32,6 +32,6 @@ func main() {
 	http.Handle("/assets/", server.AssetHandler(assets))
 	http.HandleFunc("/", server.ReadFile(assets, "/assets/index.html"))
 
-	fmt.Println("ready")
+	fmt.Println("ready to serve")
 	http.ListenAndServe(":8080", nil)
 }
