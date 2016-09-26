@@ -16,9 +16,12 @@ func AssetHandler(assets http.FileSystem) http.Handler {
 }
 
 // ReadFile Handles reading in a file to a http handler
-func ReadFile(reader io.Reader, err error) func(http.ResponseWriter, *http.Request) {
+func ReadFile(filesystem http.FileSystem, filename string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		io.Copy(w, reader)
+		reader, err := filesystem.Open(filename)
+		if err == nil {
+			io.Copy(w, reader)
+		}
 	}
 }
 
