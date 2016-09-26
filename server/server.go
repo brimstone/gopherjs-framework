@@ -48,7 +48,6 @@ func WebsocketHandler(handler func(<-chan string, chan<- string, <-chan bool)) w
 		out := make(chan string)
 		done := make(chan bool)
 		clienterr := make(chan error)
-		//doneReader := make(chan bool)
 
 		go readWebsocket(ws, in, clienterr)
 		go handler(in, out, done)
