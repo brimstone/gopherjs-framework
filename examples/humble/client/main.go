@@ -5,26 +5,33 @@ import (
 
 	"honnef.co/go/js/dom"
 
+	"github.com/brimstone/gopherjs-framework/client"
 	"github.com/brimstone/gopherjs-framework/examples/humble/client/templates"
-	"github.com/go-humble/temple/temple"
-	"github.com/go-humble/view"
+	"github.com/go-humble/router"
 )
 
-type App struct {
-	tmpl *temple.Template
-	view.DefaultView
-}
-
 var (
-	appTmpl  = templates.MustGetTemplate("app")
 	document = dom.GetWindow().Document()
 )
 
 func main() {
 	log.Println("Client!")
 
-	myapp := &App{}
-	myapp.SetElement(document.QuerySelector("body"))
-	appTmpl.ExecuteEl(myapp.Element(), nil)
-	log.Println(myapp.Element().InnerHTML())
+	appView := &client.App{
+		Tmpl: templates.MustGetTemplate("app"),
+	}
+	appView.SetElement(document.QuerySelector("body"))
+
+	// Create a new Router object
+	r := router.New()
+	// Use HandleFunc to add routes.
+	r.HandleFunc("/", func(_ *router.Context) {
+		if err := appView.Render(); err != nil {
+			panic(err)
+		}
+	})
+	// You must call Start in order to start listening for changes
+	// in the url and trigger the appropriate handler function.
+	r.Start()
+
 }
